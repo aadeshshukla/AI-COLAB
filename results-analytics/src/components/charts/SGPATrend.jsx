@@ -16,33 +16,42 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, T
 
 export default function SGPATrend({ semesters }) {
   const labels = semesters.map((s) => s.semesterName || s.semester || '');
-  const sgpaValues = semesters.map((s) => parseFloat(s.sgpa || s.SGPA || 0));
+  const sgpaValues = semesters.map((s) => {
+    const value = parseFloat(s.sgpa || s.SGPA);
+    return Number.isFinite(value) ? value : null;
+  });
   const cgpa = calculateCGPA(semesters);
+
+  const datasets = [
+    {
+      label: 'SGPA',
+      data: sgpaValues,
+      borderColor: '#60a5fa',
+      backgroundColor: 'rgba(96,165,250,0.15)',
+      fill: true,
+      tension: 0.4,
+      pointBackgroundColor: '#60a5fa',
+      pointRadius: 5,
+      spanGaps: false,
+    },
+  ];
+
+  if (cgpa !== null) {
+    datasets.push({
+      label: `CGPA (${cgpa})`,
+      data: Array(labels.length).fill(cgpa),
+      borderColor: '#f59e0b',
+      borderDash: [6, 4],
+      borderWidth: 2,
+      pointRadius: 0,
+      fill: false,
+      tension: 0,
+    });
+  }
 
   const data = {
     labels,
-    datasets: [
-      {
-        label: 'SGPA',
-        data: sgpaValues,
-        borderColor: '#60a5fa',
-        backgroundColor: 'rgba(96,165,250,0.15)',
-        fill: true,
-        tension: 0.4,
-        pointBackgroundColor: '#60a5fa',
-        pointRadius: 5,
-      },
-      {
-        label: `CGPA (${cgpa})`,
-        data: Array(labels.length).fill(cgpa),
-        borderColor: '#f59e0b',
-        borderDash: [6, 4],
-        borderWidth: 2,
-        pointRadius: 0,
-        fill: false,
-        tension: 0,
-      },
-    ],
+    datasets,
   };
 
   const options = {

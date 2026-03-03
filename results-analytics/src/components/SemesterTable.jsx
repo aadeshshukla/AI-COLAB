@@ -4,6 +4,7 @@ const HEADERS = ['Subject Code', 'Subject Name', 'Internal', 'External', 'Total'
 
 export default function SemesterTable({ semester, subjects, sgpa }) {
   const [open, setOpen] = useState(true)
+  const isSgpaAvailable = sgpa !== null && sgpa !== undefined && sgpa !== ''
 
   return (
     <div className="bg-[#1e293b] rounded-xl shadow-lg border border-slate-700 mb-4 overflow-hidden">
@@ -47,7 +48,9 @@ export default function SemesterTable({ semester, subjects, sgpa }) {
           </table>
           <div className="flex justify-end px-6 py-3 border-t border-slate-700 bg-slate-700/20">
             <span className="text-slate-400 text-sm mr-2">SGPA:</span>
-            <span className="text-emerald-400 font-bold">{sgpa}</span>
+            <span className={`font-bold ${isSgpaAvailable ? 'text-emerald-400' : 'text-amber-400'}`}>
+              {isSgpaAvailable ? sgpa : 'N/A'}
+            </span>
           </div>
         </div>
       )}

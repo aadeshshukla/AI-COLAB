@@ -3,4 +3,14 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
+  server: {
+    proxy: {
+      '/jntuhresults': {
+        target: 'https://jntuhresults.dhethi.com',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/jntuhresults/, ''),
+      },
+    },
+  },
 })

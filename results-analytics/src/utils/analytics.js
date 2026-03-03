@@ -2,7 +2,17 @@
  * Calculate CGPA using credit-weighted cumulative GPA across all semesters.
  */
 export function calculateCGPA(semesters) {
-  if (!semesters || semesters.length === 0) return 0;
+  if (!semesters || semesters.length === 0) return null;
+
+  const hasBacklog = semesters.some((sem) => {
+    const semesterFailed = Boolean(sem.failed);
+    const semesterBacklogs = Number(sem.backlogs || 0) > 0;
+    const subjectFailed = (sem.subjects || []).some((sub) => (sub.grade || '').toUpperCase() === 'F');
+    return semesterFailed || semesterBacklogs || subjectFailed || sem.hasBacklog;
+  });
+
+  if (hasBacklog) return null;
+
   let totalWeightedPoints = 0;
   let totalCredits = 0;
   semesters.forEach((sem) => {
@@ -14,7 +24,7 @@ export function calculateCGPA(semesters) {
       totalCredits += credits;
     });
   });
-  if (totalCredits === 0) return 0;
+  if (totalCredits === 0) return null;
   return parseFloat((totalWeightedPoints / totalCredits).toFixed(2));
 }
 
@@ -63,7 +73,13 @@ export function getBestWorstSubjects(semesters) {
  */
 export function getBestWorstSemesters(semesters) {
   if (!semesters || semesters.length === 0) return { best: null, worst: null };
-  const sorted = [...semesters].sort(
+  const valid = semesters.filter((sem) => {
+    const sgpa = parseFloat(sem.sgpa || sem.SGPA);
+    return Number.isFinite(sgpa);
+  });
+  if (valid.length === 0) return { best: null, worst: null };
+
+  const sorted = [...valid].sort(
     (a, b) => parseFloat(b.sgpa || b.SGPA || 0) - parseFloat(a.sgpa || a.SGPA || 0)
   );
   return { best: sorted[0], worst: sorted[sorted.length - 1] };

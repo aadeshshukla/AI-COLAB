@@ -14,8 +14,8 @@ export default function AnalyticsSummary({ semesters }) {
   const cards = [
     {
       label: 'CGPA',
-      value: cgpa.toFixed(2),
-      sub: 'Credit-weighted',
+      value: cgpa !== null ? cgpa.toFixed(2) : 'N/A',
+      sub: cgpa !== null ? 'Credit-weighted' : 'Not calculable (backlog present)',
       color: 'from-green-600 to-green-800',
       textSize: 'text-5xl',
     },
