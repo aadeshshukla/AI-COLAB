@@ -1,105 +1,144 @@
-import { useState } from 'react';
-import { fetchAcademicResult } from './services/api';
-import SearchBar from './components/SearchBar';
-import StudentInfo from './components/StudentInfo';
-import SemesterTable from './components/SemesterTable';
-import AnalyticsSummary from './components/AnalyticsSummary';
-import SGPATrend from './components/charts/SGPATrend';
-import GradeDistribution from './components/charts/GradeDistribution';
-import SubjectPerformance from './components/charts/SubjectPerformance';
-import SemesterComparison from './components/charts/SemesterComparison';
-import InternalVsExternal from './components/charts/InternalVsExternal';
+import { useState } from 'react'
+import { fetchAcademicResult } from './services/api'
+import StudentInfo from './components/StudentInfo'
+import SemesterTable from './components/SemesterTable'
+import AnalyticsSummary from './components/AnalyticsSummary'
+import SGPATrend from './components/charts/SGPATrend'
+import GradeDistribution from './components/charts/GradeDistribution'
+import SubjectPerformance from './components/charts/SubjectPerformance'
+import SemesterComparison from './components/charts/SemesterComparison'
+import InternalVsExternal from './components/charts/InternalVsExternal'
 
 export default function App() {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [studentData, setStudentData] = useState(null);
-  const [semesters, setSemesters] = useState([]);
+  const [rollNumber, setRollNumber] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const [result, setResult] = useState(null)
 
-  async function handleSearch(rollNumber) {
-    setLoading(true);
-    setError(null);
-    setStudentData(null);
-    setSemesters([]);
+  async function handleFetch() {
+    const trimmed = rollNumber.trim()
+    if (!trimmed) {
+      setError('Please enter a roll number.')
+      return
+    }
+    setLoading(true)
+    setError(null)
+    setResult(null)
     try {
-      const data = await fetchAcademicResult(rollNumber);
-      // Normalize: data may have a student info object and a list of semesters
-      const student = data.studentInfo || data.student || data.studentDetails || null;
-      const semList = data.semesters || data.results || data.semesterResults || [];
-      setStudentData(student);
-      setSemesters(semList);
+      const data = await fetchAcademicResult(trimmed)
+      if (!data || (!data.name && !data.rollNumber)) {
+        setError('No results found for this roll number. Please check and try again.')
+      } else {
+        setResult(data)
+      }
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Failed to fetch results.');
+      if (err.response) {
+        setError(`API error (${err.response.status}): ${err.response.data?.message || 'Failed to fetch results.'}`)
+      } else if (err.request) {
+        setError('Network error: Unable to reach the server. Please check your connection.')
+      } else {
+        setError('An unexpected error occurred. Please try again.')
+      }
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
+  function handleKeyDown(e) {
+    if (e.key === 'Enter') handleFetch()
+  }
+
+  const semesters = result?.semesters || []
+
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen" style={{ backgroundColor: '#0f172a' }}>
       {/* Header */}
-      <header className="bg-gray-800 border-b border-gray-700 py-6 px-4 mb-8">
-        <div className="max-w-5xl mx-auto">
-          <h1 className="text-3xl font-bold text-center text-white mb-1">
-            🎓 JNTUH Results Analytics
+      <header className="bg-[#1e293b] border-b border-slate-700 shadow-lg">
+        <div className="max-w-5xl mx-auto px-4 py-5 flex items-center gap-3">
+          <span className="text-2xl">🎓</span>
+          <h1 className="text-2xl font-bold text-slate-100 tracking-tight">
+            JNTUH Results Analytics
           </h1>
-          <p className="text-center text-gray-400 text-sm mb-6">
-            Search by roll number to view academic results &amp; analytics
-          </p>
-          <SearchBar onSearch={handleSearch} loading={loading} />
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 pb-16">
-        {/* Error */}
-        {error && (
-          <div className="bg-red-900/40 border border-red-500 text-red-300 rounded-lg px-4 py-3 mb-6">
-            {error}
+      <main className="max-w-5xl mx-auto px-4 py-8">
+        {/* Search Section */}
+        <div className="bg-[#1e293b] rounded-xl p-6 shadow-lg border border-slate-700 mb-8">
+          <label className="block text-sm font-medium text-slate-300 mb-2">
+            Enter Roll Number
+          </label>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <input
+              type="text"
+              value={rollNumber}
+              onChange={(e) => setRollNumber(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="e.g. 237W1A0501"
+              className="flex-1 bg-slate-900 border border-slate-600 text-slate-100 placeholder-slate-500 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+            />
+            <button
+              onClick={handleFetch}
+              disabled={loading}
+              className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white font-semibold px-6 py-3 rounded-lg transition-colors whitespace-nowrap"
+            >
+              {loading ? 'Fetching…' : 'Get Analytics'}
+            </button>
+          </div>
+        </div>
+
+        {/* Loading Spinner */}
+        {loading && (
+          <div className="flex flex-col items-center justify-center py-16 gap-4">
+            <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            <p className="text-slate-400">Fetching results…</p>
           </div>
         )}
 
-        {/* Student Info */}
-        {studentData && <StudentInfo student={studentData} />}
-
-        {/* Semester Tables */}
-        {semesters.length > 0 && (
-          <section className="mb-10">
-            <h2 className="text-xl font-bold text-white mb-4">📋 Semester Results</h2>
-            {semesters.map((sem, i) => (
-              <SemesterTable key={i} semester={sem} />
-            ))}
-          </section>
+        {/* Error Message */}
+        {error && !loading && (
+          <div className="bg-red-900/40 border border-red-500/50 rounded-xl px-6 py-4 text-red-300 mb-6">
+            <span className="font-semibold">Error: </span>{error}
+          </div>
         )}
 
-        {/* Analytics Dashboard */}
-        {semesters.length > 0 && (
-          <section>
-            <h2 className="text-xl font-bold text-white mb-6">📊 Analytics Dashboard</h2>
+        {/* Results */}
+        {result && !loading && (
+          <div>
+            <StudentInfo student={result} />
+            <h2 className="text-xl font-semibold text-slate-100 mb-4">Semester Results</h2>
+            {Array.isArray(semesters) && semesters.length > 0 ? (
+              semesters.map((sem, idx) => (
+                <SemesterTable
+                  key={idx}
+                  semester={sem.semester || `Semester ${idx + 1}`}
+                  subjects={sem.subjects || []}
+                  sgpa={sem.sgpa}
+                />
+              ))
+            ) : (
+              <p className="text-slate-400">No semester data available.</p>
+            )}
 
-            {/* Summary Cards */}
-            <AnalyticsSummary semesters={semesters} />
-
-            {/* Charts Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <SGPATrend semesters={semesters} />
-              <GradeDistribution semesters={semesters} />
-              <SubjectPerformance semesters={semesters} />
-              <SemesterComparison semesters={semesters} />
-              <div className="md:col-span-2">
-                <InternalVsExternal semesters={semesters} />
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* Empty state */}
-        {!loading && semesters.length === 0 && !error && (
-          <div className="text-center py-20 text-gray-500">
-            <p className="text-5xl mb-4">🔍</p>
-            <p className="text-lg">Enter a roll number above to view results and analytics</p>
+            {/* Analytics Dashboard */}
+            {semesters.length > 0 && (
+              <section className="mt-10">
+                <h2 className="text-xl font-semibold text-slate-100 mb-6">📊 Analytics Dashboard</h2>
+                <AnalyticsSummary semesters={semesters} />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                  <SGPATrend semesters={semesters} />
+                  <GradeDistribution semesters={semesters} />
+                  <SubjectPerformance semesters={semesters} />
+                  <SemesterComparison semesters={semesters} />
+                  <div className="md:col-span-2">
+                    <InternalVsExternal semesters={semesters} />
+                  </div>
+                </div>
+              </section>
+            )}
           </div>
         )}
       </main>
     </div>
-  );
+  )
 }
