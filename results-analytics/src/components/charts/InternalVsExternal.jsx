@@ -14,9 +14,17 @@ ChartJS.register(LinearScale, PointElement, LineElement, Tooltip, Legend);
 export default function InternalVsExternal({ semesters }) {
   const rawData = getInternalExternalData(semesters);
 
+  if (rawData.length === 0) {
+    return (
+      <div className="bg-gray-800 border border-gray-700 rounded-xl p-5">
+        <h3 className="text-white font-semibold mb-4">🔵 Internal vs External</h3>
+        <p className="text-gray-400 text-sm">No data available.</p>
+      </div>
+    );
+  }
+
   const maxInternal = Math.max(...rawData.map((d) => d.internal), 30);
   const maxExternal = Math.max(...rawData.map((d) => d.external), 75);
-  const refMax = Math.max(maxInternal, maxExternal);
 
   const data = {
     datasets: [

@@ -51,14 +51,11 @@ export function getBestWorstSubjects(semesters) {
   });
   if (all.length === 0) return { best: null, worst: null };
   const passed = all.filter((s) => s.grade !== 'F');
-  const sorted = [...all].sort(
-    (a, b) => parseFloat(b.total || b.totalMarks || 0) - parseFloat(a.total || a.totalMarks || 0)
+  const pool = passed.length > 0 ? passed : all;
+  const sorted = [...pool].sort(
+    (a, b) => parseFloat(b.totalMarks || b.total || 0) - parseFloat(a.totalMarks || a.total || 0)
   );
-  const best = sorted[0] || null;
-  const worst = passed.length > 0
-    ? passed.sort((a, b) => parseFloat(a.total || a.totalMarks || 0) - parseFloat(b.total || b.totalMarks || 0))[0]
-    : sorted[sorted.length - 1];
-  return { best, worst };
+  return { best: sorted[0] || null, worst: sorted[sorted.length - 1] || null };
 }
 
 /**
