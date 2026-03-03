@@ -2,7 +2,7 @@ import axios from 'axios'
 
 const BASE_URL = import.meta.env.DEV
   ? '/jntuhresults/api/getAcademicResult'
-  : 'https://jntuhresults.dhethi.com/api/getAcademicResult'
+  : '/api/getAcademicResult'
 
 function hasSubjectBacklog(subjects = []) {
   return subjects.some((subj) => (subj.grade || subj.grades || '').toUpperCase() === 'F')
