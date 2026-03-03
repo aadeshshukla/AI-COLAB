@@ -2,6 +2,12 @@ import { useState } from 'react'
 import { fetchAcademicResult } from './services/api'
 import StudentInfo from './components/StudentInfo'
 import SemesterTable from './components/SemesterTable'
+import AnalyticsSummary from './components/AnalyticsSummary'
+import SGPATrend from './components/charts/SGPATrend'
+import GradeDistribution from './components/charts/GradeDistribution'
+import SubjectPerformance from './components/charts/SubjectPerformance'
+import SemesterComparison from './components/charts/SemesterComparison'
+import InternalVsExternal from './components/charts/InternalVsExternal'
 
 export default function App() {
   const [rollNumber, setRollNumber] = useState('')
@@ -41,6 +47,8 @@ export default function App() {
   function handleKeyDown(e) {
     if (e.key === 'Enter') handleFetch()
   }
+
+  const semesters = result?.semesters || []
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#0f172a' }}>
@@ -99,8 +107,8 @@ export default function App() {
           <div>
             <StudentInfo student={result} />
             <h2 className="text-xl font-semibold text-slate-100 mb-4">Semester Results</h2>
-            {Array.isArray(result.semesters) && result.semesters.length > 0 ? (
-              result.semesters.map((sem, idx) => (
+            {Array.isArray(semesters) && semesters.length > 0 ? (
+              semesters.map((sem, idx) => (
                 <SemesterTable
                   key={idx}
                   semester={sem.semester || `Semester ${idx + 1}`}
@@ -110,6 +118,23 @@ export default function App() {
               ))
             ) : (
               <p className="text-slate-400">No semester data available.</p>
+            )}
+
+            {/* Analytics Dashboard */}
+            {semesters.length > 0 && (
+              <section className="mt-10">
+                <h2 className="text-xl font-semibold text-slate-100 mb-6">📊 Analytics Dashboard</h2>
+                <AnalyticsSummary semesters={semesters} />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                  <SGPATrend semesters={semesters} />
+                  <GradeDistribution semesters={semesters} />
+                  <SubjectPerformance semesters={semesters} />
+                  <SemesterComparison semesters={semesters} />
+                  <div className="md:col-span-2">
+                    <InternalVsExternal semesters={semesters} />
+                  </div>
+                </div>
+              </section>
             )}
           </div>
         )}
