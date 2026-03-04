@@ -141,6 +141,12 @@ export default function App() {
           </div>
         )}
       </main>
+
+      <footer className="max-w-5xl mx-auto px-4 pb-6">
+        <p className="text-center text-xs text-slate-500">
+          Developed by Aadesh Shukla
+        </p>
+      </footer>
     </div>
   )
 }
