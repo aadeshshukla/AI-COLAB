@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Analytics } from '@vercel/analytics/react'
 import { fetchAcademicResult } from './services/api'
 import StudentInfo from './components/StudentInfo'
 import SemesterTable from './components/SemesterTable'
@@ -52,6 +53,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#0f172a' }}>
+      <Analytics />
       {/* Header */}
       <header className="bg-[#1e293b] border-b border-slate-700 shadow-lg">
         <div className="max-w-5xl mx-auto px-4 py-5 flex items-center gap-3">
