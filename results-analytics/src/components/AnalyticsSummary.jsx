@@ -13,16 +13,18 @@ export default function AnalyticsSummary({ semesters }) {
   const totalCredits = getTotalCredits(semesters);
   const totalBacklogs = getTotalBacklogs(semesters);
 
-  // Motivating message logic
+  // Enhanced motivating message logic
   let motivation = '';
   if (totalBacklogs === 0) {
-    motivation = 'Excellent! No backlogs. Keep up the great work!';
+    motivation = 'Outstanding achievement! You have no backlogs. Your dedication and consistency are inspiring. Keep aiming higher!';
   } else if (totalBacklogs === 1) {
-    motivation = 'Just one backlog. You can clear it with focus and determination!';
+    motivation = 'Just one backlog – you are almost there! With a little extra effort and focus, you can clear it and reach your goals. Believe in yourself!';
   } else if (totalBacklogs <= 3) {
-    motivation = 'A few backlogs, but nothing you can’t overcome. Stay positive and keep pushing!';
+    motivation = 'A few backlogs are just minor hurdles. Your perseverance and positive attitude will help you overcome them. Every step forward counts!';
+  } else if (totalBacklogs <= 6) {
+    motivation = 'Backlogs may seem challenging, but remember: every great success story has obstacles. Stay determined, seek help when needed, and keep moving forward!';
   } else {
-    motivation = 'Backlogs are just stepping stones. Stay motivated, work hard, and success will follow!';
+    motivation = 'No matter how many backlogs, your journey is unique and full of potential. Stay strong, keep learning, and never lose hope. Progress is always possible!';
   }
 
   const cards = [
@@ -75,25 +77,27 @@ export default function AnalyticsSummary({ semesters }) {
       color: 'from-red-700 to-red-900',
       textSize: 'text-4xl',
     },
+    {
+      label: 'Motivation',
+      value: '',
+      sub: motivation,
+      color: 'from-blue-500 to-blue-700',
+      textSize: 'text-base',
+    },
   ];
 
   return (
-      <>
-        <div className="mb-6 text-center">
-          <p className="text-lg font-semibold text-blue-700">{motivation}</p>
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+      {cards.map((card) => (
+        <div
+          key={card.label}
+          className={`bg-gradient-to-br ${card.color} rounded-xl p-5 text-white shadow-lg`}
+        >
+          <p className="text-sm text-white/70 mb-1 font-medium uppercase tracking-wide">{card.label}</p>
+          <p className={`${card.textSize} font-bold leading-tight truncate`}>{card.value}</p>
+          {card.sub && <p className="text-xs text-white/60 mt-1">{card.sub}</p>}
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-          {cards.map((card) => (
-            <div
-              key={card.label}
-              className={`bg-gradient-to-br ${card.color} rounded-xl p-5 text-white shadow-lg`}
-            >
-              <p className="text-sm text-white/70 mb-1 font-medium uppercase tracking-wide">{card.label}</p>
-              <p className={`${card.textSize} font-bold leading-tight truncate`}>{card.value}</p>
-              {card.sub && <p className="text-xs text-white/60 mt-1">{card.sub}</p>}
-            </div>
-          ))}
-        </div>
-      </>
+      ))}
+    </div>
   );
 }
