@@ -3,6 +3,7 @@ import {
   getBestWorstSemesters,
   getBestWorstSubjects,
   getTotalCredits,
+  getTotalBacklogs,
 } from '../utils/analytics';
 
 export default function AnalyticsSummary({ semesters }) {
@@ -10,6 +11,7 @@ export default function AnalyticsSummary({ semesters }) {
   const { best: bestSem, worst: worstSem } = getBestWorstSemesters(semesters);
   const { best: topSubject, worst: weakSubject } = getBestWorstSubjects(semesters);
   const totalCredits = getTotalCredits(semesters);
+  const totalBacklogs = getTotalBacklogs(semesters);
 
   const cards = [
     {
@@ -52,6 +54,13 @@ export default function AnalyticsSummary({ semesters }) {
       value: totalCredits,
       sub: 'Passed subjects',
       color: 'from-purple-600 to-purple-800',
+      textSize: 'text-4xl',
+    },
+    {
+      label: 'Total Backlogs',
+      value: totalBacklogs,
+      sub: totalBacklogs === 0 ? 'No backlogs' : `${totalBacklogs} subjects/semesters failed`,
+      color: 'from-red-700 to-red-900',
       textSize: 'text-4xl',
     },
   ];
