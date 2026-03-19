@@ -13,6 +13,18 @@ export default function AnalyticsSummary({ semesters }) {
   const totalCredits = getTotalCredits(semesters);
   const totalBacklogs = getTotalBacklogs(semesters);
 
+  // Motivating message logic
+  let motivation = '';
+  if (totalBacklogs === 0) {
+    motivation = 'Excellent! No backlogs. Keep up the great work!';
+  } else if (totalBacklogs === 1) {
+    motivation = 'Just one backlog. You can clear it with focus and determination!';
+  } else if (totalBacklogs <= 3) {
+    motivation = 'A few backlogs, but nothing you can’t overcome. Stay positive and keep pushing!';
+  } else {
+    motivation = 'Backlogs are just stepping stones. Stay motivated, work hard, and success will follow!';
+  }
+
   const cards = [
     {
       label: 'CGPA',
@@ -66,17 +78,22 @@ export default function AnalyticsSummary({ semesters }) {
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-      {cards.map((card) => (
-        <div
-          key={card.label}
-          className={`bg-gradient-to-br ${card.color} rounded-xl p-5 text-white shadow-lg`}
-        >
-          <p className="text-sm text-white/70 mb-1 font-medium uppercase tracking-wide">{card.label}</p>
-          <p className={`${card.textSize} font-bold leading-tight truncate`}>{card.value}</p>
-          {card.sub && <p className="text-xs text-white/60 mt-1">{card.sub}</p>}
+      <>
+        <div className="mb-6 text-center">
+          <p className="text-lg font-semibold text-blue-700">{motivation}</p>
         </div>
-      ))}
-    </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+          {cards.map((card) => (
+            <div
+              key={card.label}
+              className={`bg-gradient-to-br ${card.color} rounded-xl p-5 text-white shadow-lg`}
+            >
+              <p className="text-sm text-white/70 mb-1 font-medium uppercase tracking-wide">{card.label}</p>
+              <p className={`${card.textSize} font-bold leading-tight truncate`}>{card.value}</p>
+              {card.sub && <p className="text-xs text-white/60 mt-1">{card.sub}</p>}
+            </div>
+          ))}
+        </div>
+      </>
   );
 }
