@@ -84,6 +84,17 @@ export default function AnalyticsSummary({ semesters }) {
       color: 'from-blue-500 to-blue-700',
       textSize: 'text-base',
     },
+    {
+      label: 'PATHFINDER-AI',
+      value: (
+        <a href="https://pathfinder-ai-mu.vercel.app/" target="_blank" rel="noopener noreferrer" className="underline text-white text-lg font-bold">
+          Visit App
+        </a>
+      ),
+      sub: 'Your Personalized Learning Journey Starts Here',
+      color: 'from-indigo-600 to-indigo-800',
+      textSize: 'text-base',
+    },
   ];
 
   return (
