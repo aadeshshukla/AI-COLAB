@@ -52,7 +52,7 @@ export default function App() {
   const semesters = result?.semesters || []
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#0f172a' }}>
+    <div className="min-h-screen" style={{ backgroundColor: '#0f172a' }}>
       <Analytics />
       {/* Header */}
       <header className="bg-[#1e293b] border-b border-slate-700 shadow-lg">
@@ -64,25 +64,20 @@ export default function App() {
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col items-center justify-center px-4 py-8">
-        {/* Tagline */}
-        <div className="mb-8 text-center">
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-100 mb-2">Get Your Academic Results Analytics</h2>
-          <p className="text-slate-400 text-base font-medium">Simple, fast, and insightful analytics for your exam results</p>
-        </div>
+      <main className="max-w-5xl mx-auto px-4 py-8">
         {/* Search Section */}
-        <div className="bg-[#1e293b] rounded-xl p-6 shadow-lg border border-slate-700 w-full max-w-md mx-auto flex flex-col items-center">
-          <label className="block text-base font-semibold text-slate-200 mb-3 text-center">
+        <div className="bg-[#1e293b] rounded-xl p-6 shadow-lg border border-slate-700 mb-8">
+          <label className="block text-sm font-medium text-slate-300 mb-2">
             Enter Roll Number
           </label>
-          <div className="flex flex-col sm:flex-row gap-3 w-full">
+          <div className="flex flex-col sm:flex-row gap-3">
             <input
               type="text"
               value={rollNumber}
               onChange={(e) => setRollNumber(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="e.g. 237W1A0501"
-              className="flex-1 bg-slate-900 border border-slate-600 text-slate-100 placeholder-slate-500 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-center"
+              className="flex-1 bg-slate-900 border border-slate-600 text-slate-100 placeholder-slate-500 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
             />
             <button
               onClick={handleFetch}
