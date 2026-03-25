@@ -56,10 +56,8 @@ export function getTotalBacklogs(semesters) {
   if (!semesters || semesters.length === 0) return 0;
   let count = 0;
   semesters.forEach((sem) => {
-    // Count subjects with grade 'F'
+    // Only count subjects with grade 'F' as backlogs
     count += (sem.subjects || []).filter((sub) => (sub.grade || '').toUpperCase() === 'F').length;
-    // Add semester-level backlogs if present
-    count += Number(sem.backlogs || 0);
   });
   return count;
 }
