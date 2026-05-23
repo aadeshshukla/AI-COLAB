@@ -1,4 +1,4 @@
-# AI-COLAB
+# ANALYTICS DASHBOARD
 
 This repository contains multiple projects. The main project documented here is:
 
