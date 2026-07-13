@@ -1,84 +1,4 @@
-import { chromium } from 'playwright';
-
-export default async function handler(req, res) {
-  if (req.method !== 'GET') {
-    res.setHeader('Allow', 'GET')
-    return res.status(405).json({ message: 'Method Not Allowed' })
-  }
-
-  const { rollNumber, htno } = req.query || {}
-  const studentNumber = rollNumber || htno
-
-  if (!studentNumber) {
-    return res.status(400).json({ message: 'rollNumber or htno is required' })
-  }
-
-  let browser
-  try {
-    // Launch browser with chromium
-    browser = await chromium.launch({
-      headless: true,
-      args: process.env.NODE_ENV === 'production' 
-        ? ['--no-sandbox', '--disable-setuid-sandbox']
-        : []
-    })
-
-    const page = await browser.newPage()
-
-    // Navigate to the page
-    const url = `https://jntuhconnect.dhethi.com/academicresult/result?htno=${encodeURIComponent(studentNumber)}`
-    
-    await page.goto(url, { 
-      waitUntil: 'networkidle',
-      timeout: 40000 
-    })
-
-    // Wait for student data
-    try {
-      await page.waitForFunction(
-        () => {
-          const text = document.body.innerText
-          return text.includes('AADESH') || text.match(/\d{3}[A-Z]\d[A-Z]\d{4}/)
-        },
-        { timeout: 10000 }
-      )
-    } catch (e) {
-      // Continue anyway
-    }
-
-    // Get the rendered content
-    const text = await page.evaluate(() => document.body.innerText)
-
-    // Close browser
-    await page.close()
-    await browser.close()
-    browser = null
-
-    // Parse the rendered text
-    const data = parseAcademicResult(text, studentNumber)
-    
-    console.log('Parsed data:', JSON.stringify(data, null, 2).substring(0, 500))
-
-    if (!data || !data.semesters || data.semesters.length === 0) {
-      console.log('No data or semesters found')
-      return res.status(404).json({ message: 'No results found for this roll number' })
-    }
-
-    return res.status(200).json(data)
-  } catch (error) {
-    console.error('API Error:', error.message)
-    return res.status(502).json({ message: 'Unable to fetch upstream results API' })
-  } finally {
-    if (browser) {
-      try {
-        await browser.close()
-      } catch (e) {
-        // Ignore close errors
-      }
-    }
-  }
-}
-
+// Parsing functions
 function parseAcademicResult(text, studentNumber) {
   try {
     const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0)
@@ -95,6 +15,10 @@ function parseAcademicResult(text, studentNumber) {
       backlogs: extractValue(lines, 'BACKLOGS'),
     }
 
+    console.log('Extracted student info:', studentInfo)
+    console.log('Total lines:', lines.length)
+    console.log('Line sample:', lines.slice(30, 35))
+
     // Parse semesters
     const semesters = []
     let i = 0
@@ -104,6 +28,7 @@ function parseAcademicResult(text, studentNumber) {
       
       // Look for semester marker (1-1, 1-2, 2-1, etc.)
       if (/^\d+-\d+$/.test(line)) {
+        console.log(`\nFound semester: ${line} at line ${i}`)
         const semesterName = line
         const [year, sem] = line.split('-').map(Number)
         const semester = (year - 1) * 2 + sem
@@ -113,6 +38,7 @@ function parseAcademicResult(text, studentNumber) {
         for (let j = i + 1; j < Math.min(i + 5, lines.length); j++) {
           if (lines[j].toUpperCase() === 'SGPA' && j + 1 < lines.length) {
             sgpa = lines[j + 1]
+            console.log(`  SGPA: ${sgpa}`)
             break
           }
         }
@@ -140,54 +66,45 @@ function parseAcademicResult(text, studentNumber) {
           
           // Check if this is a subject line (starts with code like 18117 or 181AB)
           if (/^[0-9][0-9A-Z]{3,6}\s+/.test(currentLine)) {
+            console.log(`  Parsing subject line: ${currentLine.substring(0, 80)}...`)
+            
             // Parse this line - it contains all subject info
             const parts = currentLine.split(/\s+/)
+            console.log(`    Parts: ${parts.join('|')}`)
             
             // Extract code (first part)
-            const code = parts[0]
+            let codeIdx = 0
+            const code = parts[codeIdx]
             
             // Find where subject name ends (look for marks starting with numbers)
-            let nameEndIdx = 1
+            let nameEndIdx = codeIdx + 1
             while (nameEndIdx < parts.length && !isNumericOrGradeStrict(parts[nameEndIdx])) {
               nameEndIdx++
             }
             
-            const name = parts.slice(1, nameEndIdx).join(' ')
+            const name = parts.slice(codeIdx + 1, nameEndIdx).join(' ')
             
             // Remaining parts are: internal, external, total, grade, credits
             const marks = parts.slice(nameEndIdx)
-            
-            // Handle case where grade and credits are concatenated (e.g., "O1" instead of "O", "1")
-            if (marks.length === 4 && /^[A-FO]\d+$/.test(marks[3])) {
-              const gradeCredits = marks[3]
-              marks[3] = gradeCredits[0] // grade
-              marks.push(gradeCredits.substring(1)) // credits
-            }
+            console.log(`    Code: ${code}, Name: ${name}, Marks: ${marks.join('|')}`)
             
             if (marks.length >= 5) {
-              const subject = {
-                subjectCode: code,
-                subjectName: name || 'Unknown',
-                internalMarks: marks[0] || '',
-                externalMarks: marks[1] || '',
-                totalMarks: marks[2] || '',
+              subjects.push({
+                code,
+                name: name || 'Unknown',
+                internal: marks[0] || '',
+                external: marks[1] || '',
+                total: marks[2] || '',
                 grade: marks[3] || '',
                 credits: marks[4] || '',
-              }
-
-              subjects.push({
-                ...subject,
-                code: subject.subjectCode,
-                name: subject.subjectName,
-                internal: subject.internalMarks,
-                external: subject.externalMarks,
-                total: subject.totalMarks,
               })
             }
           }
           
           i++
         }
+        
+        console.log(`  Total subjects in semester: ${subjects.length}`)
         
         if (subjects.length > 0) {
           semesters.push({
@@ -202,6 +119,8 @@ function parseAcademicResult(text, studentNumber) {
         i++
       }
     }
+
+    console.log(`\nTotal semesters parsed: ${semesters.length}`)
 
     if (semesters.length === 0) {
       return null
@@ -221,7 +140,7 @@ function parseAcademicResult(text, studentNumber) {
       semesters,
     }
   } catch (error) {
-    console.error('Parse error:', error.message)
+    console.error('Parse error:', error.message, error.stack)
     return null
   }
 }
@@ -252,3 +171,68 @@ function isNumericOrGradeStrict(str) {
   if (/^[A-FO][\+]?$|^--?$|^—$/.test(str)) return true
   return false
 }
+
+// Sample output from Playwright test - EXACT format
+const sampleText = `Get the App
+Toggle theme
+Home
+Results
+Calendars
+Syllabus
+Jobs & carrers
+Notifications
+Imp Questions
+Channels
+Connect via MCP
+Help center
+ACADEMIC RESULTS
+
+SEMESTER-WISE PERFORMANCE OVERVIEW
+
+STUDENT NAME
+
+AADESH SHUKLA
+
+ROLL NUMBER
+
+237W1A0501
+
+COLLEGE CODE
+
+7W
+
+FATHER'S NAME
+
+RAM MOORAT SHUKLA
+
+COLLEGE NAME
+
+St. Mary's Integrated Campus Hydedrabad
+
+BRANCH
+
+Computer Science & Engineering
+
+1-1
+SGPA
+7.65
+CODE    SUBJECT NAME    INT.    EXT.    TOTAL   GRADE   CR.
+18117   PROGRAMMING FOR PROBLEM SOLVING LABORATORY      40      59      99     O1
+181AB   BASIC ELECTRICAL ENGINEERING    34      29      63      B+      2
+181AG   COMPUTER AIDED ENGINEERING GRAPHICS     33      36      69      B+     3
+181AJ   ENGINEERING CHEMISTRY   38      44      82      A+      4
+18107   ELEMENTS OF COMPUTER SCIENCE & ENGINEERING      45      —       45     O1
+181AN   MATRICES AND CALCULUS   33      24      57      B       4
+18102   BASIC ELECTRICAL ENGINEERING LABORATORY 40      58      98      O      1
+181AP   PROGRAMMING FOR PROBLEM SOLVING 32      21      53      B       3
+18113   ENGINEERING CHEMISTRY LABORATORY        39      58      97      O      1
+1-2
+SGPA
+7.92
+CODE    SUBJECT NAME    INT.    EXT.    TOTAL   GRADE   CR.
+182AR   ORDINARY DIFFERENTIAL EQUATIONS AND VECTOR CALCULUS     30      24     54       B       4`
+
+const result = parseAcademicResult(sampleText, '237W1A0501')
+console.log('\n=== FINAL RESULT ===')
+console.log(JSON.stringify(result, null, 2))
+

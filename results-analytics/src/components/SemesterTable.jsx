@@ -31,11 +31,11 @@ export default function SemesterTable({ semester, subjects, sgpa }) {
             <tbody>
               {subjects.map((subj, idx) => (
                 <tr key={idx} className="border-t border-slate-700 hover:bg-slate-700/30 transition-colors">
-                  <td className="px-4 py-3 text-slate-300 whitespace-nowrap">{subj.subjectCode}</td>
-                  <td className="px-4 py-3 text-slate-100">{subj.subjectName}</td>
-                  <td className="px-4 py-3 text-slate-300 text-center">{subj.internalMarks}</td>
-                  <td className="px-4 py-3 text-slate-300 text-center">{subj.externalMarks}</td>
-                  <td className="px-4 py-3 text-slate-300 text-center">{subj.totalMarks}</td>
+                  <td className="px-4 py-3 text-slate-300 whitespace-nowrap">{subj.subjectCode || subj.code}</td>
+                  <td className="px-4 py-3 text-slate-100">{subj.subjectName || subj.name}</td>
+                  <td className="px-4 py-3 text-slate-300 text-center">{subj.internalMarks || subj.internal}</td>
+                  <td className="px-4 py-3 text-slate-300 text-center">{subj.externalMarks || subj.external}</td>
+                  <td className="px-4 py-3 text-slate-300 text-center">{subj.totalMarks || subj.total}</td>
                   <td className="px-4 py-3 text-center">
                     <span className={`font-semibold ${subj.grade === 'F' ? 'text-red-400' : 'text-emerald-400'}`}>
                       {subj.grade}
