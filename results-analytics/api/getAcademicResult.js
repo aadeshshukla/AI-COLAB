@@ -1,4 +1,5 @@
-import { chromium } from 'playwright';
+import serverlessChromium from '@sparticuz/chromium'
+import { chromium as playwrightChromium } from 'playwright-core'
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -15,13 +16,7 @@ export default async function handler(req, res) {
 
   let browser
   try {
-    // Launch browser with chromium
-    browser = await chromium.launch({
-      headless: true,
-      args: process.env.NODE_ENV === 'production' 
-        ? ['--no-sandbox', '--disable-setuid-sandbox']
-        : []
-    })
+    browser = await launchBrowser()
 
     const page = await browser.newPage()
 
@@ -224,6 +219,20 @@ function parseAcademicResult(text, studentNumber) {
     console.error('Parse error:', error.message)
     return null
   }
+}
+
+async function launchBrowser() {
+  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    return playwrightChromium.launch({
+      args: serverlessChromium.args,
+      executablePath: await serverlessChromium.executablePath(),
+      headless: true,
+    })
+  }
+
+  return playwrightChromium.launch({
+    headless: true,
+  })
 }
 
 function extractValue(lines, fieldName) {
