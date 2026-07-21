@@ -4,6 +4,7 @@
 export function calculateCGPA(semesters) {
   if (!semesters || semesters.length === 0) return null;
 
+  // 1. Backlog check (same as before)
   const hasBacklog = semesters.some((sem) => {
     const semesterFailed = Boolean(sem.failed);
     const semesterBacklogs = Number(sem.backlogs || 0) > 0;
@@ -13,19 +14,41 @@ export function calculateCGPA(semesters) {
 
   if (hasBacklog) return null;
 
-  let totalWeightedPoints = 0;
-  let totalCredits = 0;
+  // 2. Sum up SGPA for each semester
+  let totalSGPA = 0;
+  let validSemesterCount = 0;
+
   semesters.forEach((sem) => {
-    const subjects = sem.subjects || [];
-    subjects.forEach((sub) => {
-      const credits = parseFloat(sub.credits) || 0;
-      const gradePoints = gradeToPoints(sub.grade);
-      totalWeightedPoints += gradePoints * credits;
-      totalCredits += credits;
-    });
+    // Option A: If SGPA is already provided on the semester object
+    let sgpa = parseFloat(sem.sgpa);
+
+    // Option B: If SGPA needs to be calculated dynamically per semester
+    if (isNaN(sgpa)) {
+      let semWeightedPoints = 0;
+      let semCredits = 0;
+      
+      (sem.subjects || []).forEach((sub) => {
+        const credits = parseFloat(sub.credits) || 0;
+        const gradePoints = gradeToPoints(sub.grade);
+        semWeightedPoints += gradePoints * credits;
+        semCredits += credits;
+      });
+
+      if (semCredits > 0) {
+        sgpa = semWeightedPoints / semCredits;
+      }
+    }
+
+    if (!isNaN(sgpa)) {
+      totalSGPA += sgpa;
+      validSemesterCount++;
+    }
   });
-  if (totalCredits === 0) return null;
-  return parseFloat((totalWeightedPoints / totalCredits).toFixed(2));
+
+  if (validSemesterCount === 0) return null;
+
+  // 3. Average of SGPAs: Total SGPA / Total Semesters
+  return parseFloat((totalSGPA / validSemesterCount).toFixed(2));
 }
 
 function gradeToPoints(grade) {
