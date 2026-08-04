@@ -1,5 +1,15 @@
-import serverlessChromium from '@sparticuz/chromium'
-import { chromium as playwrightChromium } from 'playwright-core'
+const UPSTREAM_RESULTS_API_URL = process.env.RESULTS_API_URL || 'https://jntuhresults.dhethi.com/api/getAcademicResult'
+// Public key used by the JNTUH Connect browser UI. An environment value can
+// override this when the provider rotates it.
+const UPSTREAM_RESULTS_API_KEY = process.env.RESULTS_API_KEY || 'kanipinchinda'
+
+function buildUpstreamHeaders() {
+  return {
+    accept: 'application/json',
+    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+    'X-Api-Key': UPSTREAM_RESULTS_API_KEY,
+  }
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -14,63 +24,41 @@ export default async function handler(req, res) {
     return res.status(400).json({ message: 'rollNumber or htno is required' })
   }
 
-  let browser
   try {
-    browser = await launchBrowser()
+    const upstreamResult = await fetchUpstreamResults(studentNumber)
+    return res.status(upstreamResult.status).json(upstreamResult.payload)
+  } catch (error) {
+    console.error('Results API request failed:', error.message)
+    return res.status(502).json({
+      message: 'Unable to reach the results service. Please try again shortly.',
+    })
+  }
+}
 
-    const page = await browser.newPage()
+async function fetchUpstreamResults(studentNumber) {
+  try {
+    const upstreamUrl = new URL(UPSTREAM_RESULTS_API_URL)
+    upstreamUrl.searchParams.set('rollNumber', studentNumber)
 
-    // Navigate to the page
-    const url = `https://jntuhconnect.dhethi.com/academicresult/result?htno=${encodeURIComponent(studentNumber)}`
-    
-    await page.goto(url, { 
-      waitUntil: 'networkidle',
-      timeout: 40000 
+    const response = await fetch(upstreamUrl.toString(), {
+      headers: buildUpstreamHeaders(),
+      signal: AbortSignal.timeout(12000),
     })
 
-    // Wait for student data
-    try {
-      await page.waitForFunction(
-        () => {
-          const text = document.body.innerText
-          return text.includes('AADESH') || text.match(/\d{3}[A-Z]\d[A-Z]\d{4}/)
+    const payload = await response.json().catch(() => ({}))
+
+    if (!response.ok) {
+      return {
+        status: response.status,
+        payload: {
+          message: payload.message || payload.detail || 'The results service could not complete this request.',
         },
-        { timeout: 10000 }
-      )
-    } catch (e) {
-      // Continue anyway
-    }
-
-    // Get the rendered content
-    const text = await page.evaluate(() => document.body.innerText)
-
-    // Close browser
-    await page.close()
-    await browser.close()
-    browser = null
-
-    // Parse the rendered text
-    const data = parseAcademicResult(text, studentNumber)
-    
-    console.log('Parsed data:', JSON.stringify(data, null, 2).substring(0, 500))
-
-    if (!data || !data.semesters || data.semesters.length === 0) {
-      console.log('No data or semesters found')
-      return res.status(404).json({ message: 'No results found for this roll number' })
-    }
-
-    return res.status(200).json(data)
-  } catch (error) {
-    console.error('API Error:', error.message)
-    return res.status(502).json({ message: 'Unable to fetch upstream results API' })
-  } finally {
-    if (browser) {
-      try {
-        await browser.close()
-      } catch (e) {
-        // Ignore close errors
       }
     }
+
+    return { status: 200, payload }
+  } catch (error) {
+    throw new Error(`Upstream request failed: ${error.message}`)
   }
 }
 
@@ -219,20 +207,6 @@ function parseAcademicResult(text, studentNumber) {
     console.error('Parse error:', error.message)
     return null
   }
-}
-
-async function launchBrowser() {
-  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
-    return playwrightChromium.launch({
-      args: serverlessChromium.args,
-      executablePath: await serverlessChromium.executablePath(),
-      headless: true,
-    })
-  }
-
-  return playwrightChromium.launch({
-    headless: true,
-  })
 }
 
 function extractValue(lines, fieldName) {

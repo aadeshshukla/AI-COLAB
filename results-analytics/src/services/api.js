@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const BASE_URL = '/api/getAcademicResult'
+const BASE_URL = import.meta.env.VITE_RESULTS_API_URL || '/api/getAcademicResult'
 
 function normalizeSubject(subj = {}) {
   const grade = subj.grade || subj.grades || ''
