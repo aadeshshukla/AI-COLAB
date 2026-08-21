@@ -1,4 +1,6 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "regions": ["bom1"],
   "functions": {
     "api/getAcademicResult.js": {
       "maxDuration": 60

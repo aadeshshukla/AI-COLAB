@@ -1,6 +1,12 @@
 import axios from 'axios'
 
-const BASE_URL = import.meta.env.VITE_RESULTS_API_URL || '/api/getAcademicResult'
+// The upstream results API requires a private header.  Production requests
+// must therefore go through our same-origin serverless proxy, never directly
+// from the browser.  A relative override remains useful for local testing.
+const configuredApiUrl = import.meta.env.VITE_RESULTS_API_URL
+const BASE_URL = configuredApiUrl?.startsWith('/')
+  ? configuredApiUrl
+  : '/api/getAcademicResult'
 
 function normalizeSubject(subj = {}) {
   const grade = subj.grade || subj.grades || ''
