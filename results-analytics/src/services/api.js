@@ -1,11 +1,12 @@
 import axios from 'axios'
 
-// The upstream results API requires a private header.  Production requests
-// must therefore go through our same-origin serverless proxy, never directly
-// from the browser.  A relative override remains useful for local testing.
-const configuredApiUrl = import.meta.env.VITE_RESULTS_API_URL
-const BASE_URL = configuredApiUrl?.startsWith('/')
-  ? configuredApiUrl
+// A self-hosted JNTUH backend is configured separately from the provider's
+// upstream URL. Never set VITE_RESULTS_API_URL to the provider: it requires
+// an authenticated server-to-server request and will return 403 in browsers.
+const selfHostedBackendUrl = import.meta.env.VITE_RESULTS_BACKEND_URL?.replace(/\/+$/, '')
+const selfHostedBackendApiKey = import.meta.env.VITE_RESULTS_BACKEND_API_KEY
+const BASE_URL = selfHostedBackendUrl
+  ? `${selfHostedBackendUrl}/api/getAcademicResult`
   : '/api/getAcademicResult'
 
 function normalizeSubject(subj = {}) {
@@ -93,6 +94,9 @@ export async function fetchAcademicResult(rollNumber) {
   try {
     const response = await axios.get(BASE_URL, {
       params: { rollNumber },
+      headers: selfHostedBackendApiKey
+        ? { 'X-Api-Key': selfHostedBackendApiKey }
+        : undefined,
     })
     return normalizeAcademicResult(response.data)
   } catch (error) {

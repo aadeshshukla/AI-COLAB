@@ -57,7 +57,8 @@ export default function App() {
         <div className="max-w-5xl mx-auto px-4 py-5 flex items-center gap-3">
           <span className="text-2xl">🎓</span>
           <h1 className="text-2xl font-bold text-slate-100 tracking-tight">
-            JNTUH Results Analytics
+            JNTUH Results Analytics(RIP) - this app is no longer maintained,
+             please use the official JNTUH results portal for accurate and up-to-date information.
           </h1>
         </div>
       </header>

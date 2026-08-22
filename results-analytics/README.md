@@ -219,6 +219,32 @@ This project is designed to deploy cleanly on Vercel:
 The production app will use:
 - `/api/getAcademicResult` (serverless proxy)
 
+## Self-hosted results backend
+
+The upstream JNTUH Connect provider can reject requests that originate from
+Vercel. To use your own backend instead, deploy the GPL-3.0
+[`jntuh-backend`](https://github.com/ThilakReddyy/jntuh-backend) service with
+its required PostgreSQL, Redis, RabbitMQ, API, and worker processes. It is not
+a Vercel serverless deployment.
+
+After its health and result endpoints are verified, add these **Vercel
+Production** environment variables and redeploy:
+
+```env
+VITE_RESULTS_BACKEND_URL=https://your-results-backend.example.com
+VITE_RESULTS_BACKEND_API_KEY=your-backend-api-access-key
+```
+
+The backend must allow this frontend origin in CORS:
+
+```text
+https://results-analytics.vercel.app
+```
+
+`VITE_RESULTS_BACKEND_API_KEY` is sent by the browser, so treat it as a public
+gateway key and protect the backend with origin rules and rate limiting. Never
+put a private upstream provider credential in a `VITE_*` variable.
+
 ---
 
 # Notes / Troubleshooting
