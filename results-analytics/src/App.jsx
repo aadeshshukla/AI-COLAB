@@ -99,7 +99,7 @@ export default function App() {
         {/* Error Message */}
         {error && !loading && (
           <div className="bg-red-900/40 border border-red-500/50 rounded-xl px-6 py-4 text-red-300 mb-6">
-            <span className="font-semibold">Error: </span>{error}
+            <span className="font-semibold">Error: </span>{<p>the app is currently unavailable.</p>}
           </div>
         )}
 
